@@ -6,9 +6,9 @@ FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 
 static CAN_message_t msg;
-static int rpm = 2000;
+static int rpm = 850;
 static int ect = 89;
-static int speed = 50;
+static int speed = 40;
 
 // -------------------------------------------------------------
 void setup(void)
@@ -45,28 +45,28 @@ void GmCanProcessor(const CAN_message_t &msg) {
   int ectA;
 
       //Serial.print("Input Frame Detected, Message ID: ");
-      //Serial.print(msg.id);
+      //Serial.println(msg.id);
       //Serial.print(" Extended: ");
       //Serial.println(msg.flags.extended);
       if(msg.id == 201) {
         rpmA = msg.buf[1];
         rpmB = msg.buf[2];
         rpm = (((rpmA * 256) + rpmB) / 4);
-        //Serial.println("RPM Input Frame");
-        //Serial.println(rpm);
+        Serial.println("RPM Input Frame");
+        Serial.println(rpm);
       }
       if(msg.id == 1001) {
         speedA = msg.buf[0];
         speedB = msg.buf[1];
         speed = (((speedA * 256) + speedB) / 100);
-        //Serial.println("Speed Input Frame");
-        //Serial.println(speed);
+        Serial.println("Speed Input Frame");
+        Serial.println(speed);
       }          
       if(msg.id == 1217) {
         ectA = msg.buf[2];
         ect = (ectA - 40);
-        //Serial.println("ECT Input Frame");
-        //Serial.println(ect);
+        Serial.println("ECT Input Frame");
+        Serial.println(ect);
       }
 }
 
@@ -112,33 +112,6 @@ void ClusterKeepAlive() {
     }
 }
 
-void TracABSLights() {
-  //Disables Traction Control and ABS warning lights on dash.
-	static const unsigned long REFRESH_INTERVAL_TRACABS = 500; // ms
-	static unsigned long lastRefreshTime_tracAbs = 0;
-//  unsigned char CANMSG[8] = {0, 8, 223, 126, 0, 0, 0, 0};  //Clears ABS and Trac Lights - Byte 1 value of 8 clears Trac, Byte 3 value of 126 clears ABS.
-
-	if(millis() - lastRefreshTime_tracAbs >= REFRESH_INTERVAL_TRACABS)
-	{
-    //Serial.print("Sending Trac/ABS Light Frame");
-    //Serial.print("\r\n"); 
-		lastRefreshTime_tracAbs += REFRESH_INTERVAL_TRACABS;
-    msg.flags.extended = 1;
-    msg.id = 0x91C0170;
-    msg.len = 8;
-    msg.buf[0] = 0;
-    msg.buf[1] = 8;
-    msg.buf[2] = 223;
-    msg.buf[3] = 126;
-    msg.buf[4] = 0;
-    msg.buf[5] = 0;
-    msg.buf[6] = 0;
-    msg.buf[7] = 0;      
-    msg.buf[0]++;
-    can1.write(msg);     
-	}
-}
-
 void RPM() {
   //Send RPM to gauge cluster tachometer
 	static const unsigned long REFRESH_INTERVAL_RPM = 20; // ms
@@ -172,34 +145,30 @@ void RPM() {
 
 void Speed() {
   // Send vehicle speed to gauge cluster speedometer
-	static const unsigned long REFRESH_INTERVAL_SPEED = 100; // ms
+	static const unsigned long REFRESH_INTERVAL_SPEED = 50; // ms
 	static unsigned long lastRefreshTimeSpeed = 0;
   static int speedMPH;
   // speed = 50;
   // unsigned char CANMSG[8] = {0, 8, 0, 126, 0, 0, upper, lower};   
-  // Final 2 bytes specify Speed
+  // Final 2 bytes specify Speed, last byte is 0 - 255 for 1 MPH, ignoring for simplicity.
 
     if(millis() - lastRefreshTimeSpeed >= REFRESH_INTERVAL_SPEED)
     {
     	lastRefreshTimeSpeed += REFRESH_INTERVAL_SPEED;
-      speedMPH = (speed * 1.59);
-      //Serial.print("Speed:");
-      //Serial.println(speedMPH);      
-      //byte upper = ((speedMPH) >> 8) + 224;
-      //byte lower = (speed) & 0xFF;
+      speedMPH = (speed / 1.59);
+      Serial.print("Speed:");
+      Serial.println(speed);
       msg.flags.extended = 1;
       msg.id = 152830320;
       msg.len = 8;
       msg.buf[0] = 0;
       msg.buf[1] = 8;
-      msg.buf[2] = 0;
+      msg.buf[2] = 223;
       msg.buf[3] = 126;
-      msg.buf[4] = 0;
+      msg.buf[4] = 192;
       msg.buf[5] = 0;
       msg.buf[6] = speedMPH;
-//      msg.buf[6] = upper;
       msg.buf[7] = 0;
-//      msg.buf[7] = lower;      
       msg.buf[0]++;
       can1.write(msg); 
     }
@@ -213,7 +182,6 @@ void loop(void)
   ClusterKeepAlive(); 
   Speed();
   RPM();
-  TracABSLights();
   starterEnableControl();
 
 }
