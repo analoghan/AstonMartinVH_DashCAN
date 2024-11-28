@@ -7,7 +7,7 @@ The current code base is written for a Teensy 4.0 using a Dual CAN-Bus adapter f
 
 Multiple variations of this code are presented here to assist others with projects.  They are as follows:
 
-* Teensy_4_Aston_CAN_Translator_v1.ino - (Current) Full support for tachometer, speedometer, coolant gauge, cluster keep-alive and disabling of trac and ABS lights.  Interrupt based management of incoming OBDII data on second CAN channel allows for read from new engine ECU and translation to Aston values and updates to Aston dashboard.  Additional updates will be added, but this is currently a fully functional example.
+* Teensy_4_Aston_CAN_Translator_v1.ino - (Current) Full support for tachometer, speedometer, coolant gauge, cluster keep-alive, disabling of trac and ABS lights and management of an output to control Aston "start" button.  Interrupt based management of incoming OBDII data on second CAN channel allows for read from new engine ECU and translation to Aston values and updates to Aston dashboard.  Additional updates will be added, but this is currently a fully functional example.
   
 * RPI2040_Aston_CAN_Translator.ino - (Legacy) Basic build with manual control of RPM, coolant temp and trac/ABS lights.
 * RPI2040_Aston_CAN_Translator_v3.ino - (Legacy) Display only build with sweep implemented for RPM and coolant temp.  Use to help understand how to interact with these gauges.
